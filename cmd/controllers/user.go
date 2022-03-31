@@ -13,7 +13,14 @@ type UserController struct {
 }
 
 func (UserController *UserController) FindAll(w http.ResponseWriter, r *http.Request) {
-	users, err := json.Marshal(UserController.UserService.FindAll())
+	usersDto, err := UserController.UserService.FindAll()
+	if err != nil {
+		fmt.Print(w, "Users fetch fail")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	users, err := json.Marshal(usersDto)
 	if err != nil {
 		fmt.Print(w, "Json decode error")
 		w.WriteHeader(http.StatusInternalServerError)

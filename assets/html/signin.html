@@ -1,0 +1,19 @@
+{{template "base" .}}
+
+{{define "title"}}Home{{end}}
+
+{{define "main"}}
+
+<form method="post">
+    <div class="form-group mb-3">
+        <label for="usernameInput">Username</label>
+        <input type="email" class="form-control" id="usernameInput" placeholder="Enter username" name="username">
+    </div>
+    <div class="form-group mb-3">
+        <label for="passwordInput">Password</label>
+        <input type="password" class="form-control" id="passwordInput" placeholder="Enter password" name="password">
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
+{{end}}

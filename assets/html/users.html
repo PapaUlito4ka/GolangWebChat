@@ -1,0 +1,23 @@
+{{template "base" .}}
+
+{{define "title"}}Home{{end}}
+
+{{define "main"}}
+<div class="d-flex flex-column">
+    {{ range .Users }}
+        <hr />
+        <div class="d-flex flex-row">
+            <div class="flex-shrink-1">
+                <img class="rounded" src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png" width="50" height="50">
+            </div>
+            <div class="d-flex flex-grow-1 align-items-center px-2">
+                <p>{{ .Username }}</p>
+            </div>
+            <div class="flex-shrink-1">
+                <a class="d-flex flex-fill" href="#">Chat</a>
+            </div>
+        </div>
+
+    {{ end }}
+</div>
+{{end}}
