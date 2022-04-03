@@ -23,13 +23,15 @@ func AuthRequired(next http.Handler) http.Handler {
 			http.Redirect(w, r, "/signin", http.StatusSeeOther)
 			return
 		}
+
+		next.ServeHTTP(w, r)
 	})
 }
 
 func Logging(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		next.ServeHTTP(w, req)
-		log.Printf("%s %s %s", req.Method, req.RequestURI, time.Since(start))
+		next.ServeHTTP(w, r)
+		log.Printf("%s %s %s", r.Method, r.RequestURI, time.Since(start))
 	})
 }

@@ -1,0 +1,131 @@
+{{template "base" .}}
+
+{{define "title"}}Chat{{end}}
+
+{{define "styles"}}
+
+<style>
+    .darker {
+        border-color: #ccc;
+        background-color: #ddd;
+        border: 2px solid #dedede;
+        background-color: #f1f1f1;
+        border-radius: 5px;
+        padding: 10px;
+        margin: 10px 0;
+    }
+
+    .chat-window {
+        height: 550px;
+        overflow: scroll;
+    }
+
+    .message-input {}
+</style>
+
+{{end}}
+
+{{define "main"}}
+
+<div class="chat-window">
+</div>
+
+<div class="d-flex flex-row">
+    <input type="text" class="form-control me-2 message-input" placeholder="Enter message"></input>
+</div>
+
+{{end}}
+
+
+{{ define "scripts" }}
+
+<script>
+
+    var chatSocket;
+    var userSession;
+
+    function scrollToBottom() {
+        let chatWindow = $('.chat-window');
+        chatWindow.scrollTop(chatWindow[0].scrollHeight);
+    }
+
+    function loadMessages(chatId) {
+        $.ajax({
+            url: `/api/chats/${chatId}/`,
+            method: 'get',
+            success: function (chatJson) {
+                // TODO
+            }
+        });
+    }
+
+    function addMessage(data) {
+
+        const cls = data.user === {{ .Session.Values.username }} ? 'darker' : '';
+        $('.chat-window').append(
+            `   <div class="d-flex flex-row p-2 ${cls}">
+                    <div class="d-flex flex-column flex-shrink-1 me-3">
+                        <div class="d-flex flex-fill justify-content-center">
+                            <img class="rounded"
+                                src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
+                                width="50" height="50">
+                        </div>
+                    </div>
+                    <div class="d-flex flex-column flex-grow-1">
+                        <p class="mb-0 text-muted">${data.user}</p>
+                        <p>${data.message}</p>
+                    </div>
+                    <div class="flex-shrink-1 ms-3">
+                        <span class="time-right">11:00</span>
+                    </div>
+                </div>`
+        );
+        scrollToBottom();
+    }
+
+    function sendMessage() {
+        const messageInput = $('.message-input');
+        const message = messageInput.val();
+        const data = {
+            'userId': {{.Session.Values.id}},
+            'chatId': {{.RoomName}},
+            'user': userSession,
+            'message': message,
+        };
+        chatSocket.send(JSON.stringify(data));
+        messageInput.prop('value', '');
+    }
+
+
+    function init(roomName, user) {
+
+        userSession = user;
+        chatSocket = new WebSocket(
+            'ws://'
+            + window.location.host
+            + '/ws/chat/'
+            + roomName.toString()
+            + '/'
+        );
+
+        chatSocket.onmessage = function (e) {
+            const data = JSON.parse(e.data);
+            addMessage(data);
+        };
+
+        chatSocket.onclose = function (e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        $('.message-input').keyup(function (e) {
+            if (e.keyCode === 13) {
+                sendMessage();
+            }
+        });
+    }
+
+    init({{.RoomName}}, {{.Session.Values.username}});
+
+</script>
+
+{{ end }}

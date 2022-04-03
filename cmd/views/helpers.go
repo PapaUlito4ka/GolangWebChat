@@ -6,23 +6,31 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gorilla/sessions"
 	"github.com/papaulito4ka/golangwebchat/cmd/dto"
 	"github.com/papaulito4ka/golangwebchat/cmd/middleware"
 )
 
-func RenderTemplate(w http.ResponseWriter, files []string, data interface{}) error {
+func RenderTemplate(templateName string, w http.ResponseWriter, files []string, data interface{}) error {
 
-	ts, err := template.ParseFiles(files...)
+	ts, err := template.New(templateName).Funcs(template.FuncMap{
+		"Contains": func(chats []dto.ChatDto, user dto.UserDto) int64 {
+			for _, chat := range chats {
+				if chat.Friend.Id == user.Id {
+					return chat.Id
+				}
+			}
+			return 0
+		},
+	}).ParseFiles(files...)
 	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "Internal Server Error", 500)
+		HandleInternalServerError(err, w)
 		return err
 	}
 
 	err = ts.Execute(w, data)
 	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "Internal Server Error", 500)
+		HandleInternalServerError(err, w)
 		return err
 	}
 
@@ -43,4 +51,31 @@ func CreateSession(w http.ResponseWriter, r *http.Request, user dto.UserDto) err
 	}
 
 	return nil
+}
+
+func GetSession(w http.ResponseWriter, r *http.Request) *sessions.Session {
+	session, _ := middleware.Store.Get(r, middleware.SESSION_NAME)
+	return session
+}
+
+func DeleteSession(w http.ResponseWriter, r *http.Request) error {
+	session, _ := middleware.Store.Get(r, middleware.SESSION_NAME)
+	if session.IsNew {
+		return errors.New("session is new")
+	}
+	session.Options.MaxAge = -1
+
+	err := session.Save(r, w)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func HandleInternalServerError(err error, w http.ResponseWriter) {
+	if err != nil {
+		log.Println(err.Error())
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
 }

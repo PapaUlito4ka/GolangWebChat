@@ -2,9 +2,14 @@
 
 {{define "title"}}Home{{end}}
 
+{{ define "styles" }}{{ end }}
+
 {{define "main"}}
 <div class="d-flex flex-column">
+    {{ $id := .Session.Values.id }}
+    {{ $chats := .Chats }}
     {{ range .Users }}
+        {{ if ne .Id $id }}
         <hr />
         <div class="d-flex flex-row">
             <div class="flex-shrink-1">
@@ -13,11 +18,41 @@
             <div class="d-flex flex-grow-1 align-items-center px-2">
                 <p>{{ .Username }}</p>
             </div>
-            <div class="flex-shrink-1">
-                <a class="d-flex flex-fill" href="#">Chat</a>
+            <div class="d-flex flex-shrink-1 friend-or-user-{{.Id}} align-items-center">
+                {{ $chatId := Contains $chats .  }}
+                {{ if ne $chatId 0 }}
+                    <a class="d-flex flex-fill" href="/chat/{{$chatId}}">Chat</a>
+                {{ else }}
+                    <a class="fs-2" onclick="addToFriends({{$id}}, {{.Id}})">+</a>
+                {{ end }}
             </div>
         </div>
-
+        {{ end }}
+    {{ else }}
+        <p class="text-center fs-2">No rows</p>
+        <img src="https://i.ytimg.com/vi/V7ZX9odk1KY/maxresdefault.jpg" class="rounded">
     {{ end }}
 </div>
 {{end}}
+
+{{ define "scripts" }}
+<script>
+
+    function addToFriends(userId, friendId) {
+        $.ajax({
+            url: `/api/users/${userId}/add_friend/${friendId}/`,
+            method: 'get',
+            success: function(chatJson) {
+                console.log(chatJson);
+                let friendOrUser = $(`.friend-or-user-${friendId}`);
+                friendOrUser.empty();
+                friendOrUser.append(
+                    `<a class="d-flex flex-fill" href="/chat/${chatJson.chat_id}">Chat</a>`
+                );
+            }
+        });
+    }
+
+
+</script>
+{{ end }}

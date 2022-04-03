@@ -5,8 +5,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/papaulito4ka/golangwebchat/cmd/controllers"
-	"github.com/papaulito4ka/golangwebchat/cmd/db"
-	"github.com/papaulito4ka/golangwebchat/cmd/services"
 )
 
 type UserRouter struct {
@@ -16,17 +14,12 @@ type UserRouter struct {
 
 func NewUserRouter(router *mux.Router, Db *sql.DB) UserRouter {
 	return UserRouter{
-		Router: router,
-		UserController: controllers.UserController{
-			UserService: services.UserService{
-				UserDb: db.UserDB{
-					Db: Db,
-				},
-			},
-		},
+		Router:         router,
+		UserController: controllers.NewUserController(Db),
 	}
 }
 
 func (UserRouter *UserRouter) Init() {
 	UserRouter.Router.HandleFunc("/api/users/", UserRouter.UserController.FindAll)
+	UserRouter.Router.HandleFunc("/api/users/{user_id:[0-9]+}/add_friend/{friend_id:[0-9]+}/", UserRouter.UserController.AddFriend)
 }

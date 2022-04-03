@@ -2,12 +2,14 @@
 
 {{define "title"}}Home{{end}}
 
+{{ define "styles" }}{{ end }}
+
 {{define "main"}}
 
 <form method="post">
     <div class="form-group mb-3">
         <label for="usernameInput">Username</label>
-        <input type="email" class="form-control" id="usernameInput" placeholder="Enter username" name="username">
+        <input type="text" class="form-control" id="usernameInput" placeholder="Enter username" name="username">
     </div>
     <div class="form-group mb-3">
         <label for="passwordInput">Password</label>
@@ -17,3 +19,6 @@
 </form>
 
 {{end}}
+
+
+{{ define "scripts" }}{{ end }}
