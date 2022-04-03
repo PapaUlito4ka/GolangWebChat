@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/papaulito4ka/golangwebchat/cmd/global"
 	"github.com/papaulito4ka/golangwebchat/cmd/routes"
@@ -19,5 +20,6 @@ func main() {
 
 	views.InitViews()
 
-	http.ListenAndServe(":8080", global.Handler)
+	port := os.Getenv("PORT")
+	http.ListenAndServe(":"+port, global.Handler)
 }

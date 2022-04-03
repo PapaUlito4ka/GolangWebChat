@@ -53,7 +53,7 @@ func (chatDb *ChatDB) SendMessage(chatId, userId int64, message string) (int64, 
 		return 0, err
 	}
 
-	row := stmt.QueryRow(chatId, userId, message)
+	row := stmt.QueryRow(userId, chatId, message)
 
 	messageId := int64(0)
 	if err := row.Scan(&messageId); err != nil {
@@ -61,4 +61,45 @@ func (chatDb *ChatDB) SendMessage(chatId, userId int64, message string) (int64, 
 	}
 
 	return messageId, nil
+}
+
+func (chatDb *ChatDB) FindChatMessages(chatId int64) ([]dao.MessageDao, error) {
+	query := `	select
+					u.user_id,
+					u.username,
+					u.password,
+					message.message,
+					message.time
+				from message
+				join "user" u on u.user_id = message.user_id
+				where chat_id = $1
+				order by time;`
+	stmt, err := chatDb.Db.Prepare(query)
+	if err != nil {
+		return []dao.MessageDao{}, err
+	}
+
+	rows, err := stmt.Query(chatId)
+	if err != nil {
+		return []dao.MessageDao{}, err
+	}
+
+	messages := []dao.MessageDao{}
+
+	for rows.Next() {
+		message := dao.MessageDao{}
+
+		if err := rows.Scan(
+			&message.User.Id,
+			&message.User.Username,
+			&message.User.Password,
+			&message.Message,
+			&message.Time); err != nil {
+			return []dao.MessageDao{}, err
+		}
+
+		messages = append(messages, message)
+	}
+
+	return messages, nil
 }

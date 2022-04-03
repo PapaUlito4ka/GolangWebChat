@@ -2,6 +2,7 @@ package views
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/papaulito4ka/golangwebchat/cmd/global"
@@ -10,13 +11,12 @@ import (
 
 func InitViews() {
 	global.Router.HandleFunc("/", Home).Methods("GET")
-	global.Router.HandleFunc("/users", Users).Methods("GET")
-	global.Router.HandleFunc("/signin", SignIn).Methods("GET", "POST")
-	global.Router.HandleFunc("/signup", SignUp).Methods("GET", "POST")
-	global.Router.HandleFunc("/logout", Logout).Methods("GET")
-	global.Router.HandleFunc("/chat/{chat_id:[0-9]+}", ChatRoom).Methods("GET")
+	global.Router.Handle("/signin", middleware.AuthNotRequired(http.HandlerFunc(SignIn))).Methods("GET", "POST")
+	global.Router.Handle("/signup", middleware.AuthNotRequired(http.HandlerFunc(SignUp))).Methods("GET", "POST")
+	global.Router.Handle("/logout", middleware.AuthRequired(http.HandlerFunc(Logout))).Methods("GET")
+	global.Router.Handle("/chat/{chat_id:[0-9]+}", middleware.HasChatAccess(http.HandlerFunc(ChatRoom))).Methods("GET")
+	global.Router.Handle("/users", middleware.AuthRequired(http.HandlerFunc(Users))).Methods("GET")
 	global.Router.Handle("/friends", middleware.AuthRequired(http.HandlerFunc(Friends))).Methods("GET")
-	global.Router.HandleFunc("/", NotFound).Methods("GET")
 
 	global.Handler = middleware.Logging(global.Router)
 }
@@ -45,11 +45,18 @@ func ChatRoom(w http.ResponseWriter, r *http.Request) {
 		"./assets/html/chat_room.html",
 		"./assets/html/base.html",
 	}
+	var err error
 
 	params := mux.Vars(r)
 	data := make(map[string]interface{})
+	chatId, _ := strconv.Atoi(params["chat_id"])
 	data["RoomName"] = params["chat_id"]
 	data["Session"] = GetSession(w, r)
+	data["Messages"], err = global.ChatService.FindChatMessages(int64(chatId))
+	if err != nil {
+		HandleInternalServerError(err, w)
+		return
+	}
 
 	if err := RenderTemplate("chat_room.html", w, files, data); err != nil {
 		return
@@ -106,11 +113,10 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 		"./assets/html/signin.html",
 		"./assets/html/base.html",
 	}
+	data := make(map[string]interface{})
+	data["Session"] = GetSession(w, r)
 
 	if r.Method == "GET" {
-		data := make(map[string]interface{})
-		data["Session"] = GetSession(w, r)
-
 		if err := RenderTemplate("signin.html", w, files, data); err != nil {
 			return
 		}
@@ -122,7 +128,8 @@ func SignIn(w http.ResponseWriter, r *http.Request) {
 
 		user, err := global.UserService.Find(username, password)
 		if err != nil {
-			HandleInternalServerError(err, w)
+			data["Error"] = "Wrong username or password"
+			RenderTemplate("signin.html", w, files, data)
 			return
 		}
 
@@ -141,11 +148,10 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		"./assets/html/signup.html",
 		"./assets/html/base.html",
 	}
+	data := make(map[string]interface{})
+	data["Session"] = GetSession(w, r)
 
 	if r.Method == "GET" {
-		data := make(map[string]interface{})
-		data["Session"] = GetSession(w, r)
-
 		if err := RenderTemplate("signup.html", w, files, data); err != nil {
 			return
 		}
@@ -157,7 +163,8 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 
 		userId, err := global.UserService.Create(username, password)
 		if err != nil {
-			HandleInternalServerError(err, w)
+			data["Error"] = "User already exists"
+			RenderTemplate("signup.html", w, files, data)
 			return
 		}
 
@@ -174,16 +181,5 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 		}
 
 		http.Redirect(w, r, "/", http.StatusSeeOther)
-	}
-}
-
-func NotFound(w http.ResponseWriter, r *http.Request) {
-	files := []string{
-		"./assets/html/not_found.html",
-		"./assets/html/base.html",
-	}
-
-	if err := RenderTemplate("not_found.html", w, files, nil); err != nil {
-		return
 	}
 }

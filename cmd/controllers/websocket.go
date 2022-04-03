@@ -17,7 +17,7 @@ type WebsocketController struct {
 
 type WebsocketData struct {
 	ChatId  string `json:"chatId"`
-	UserId  string `json:"userId"`
+	UserId  int64  `json:"userId"`
 	User    string `json:"user"`
 	Message string `json:"message"`
 }
@@ -64,9 +64,8 @@ func (websocketController *WebsocketController) writeMessage(message []byte) {
 	}
 
 	chatId, _ := strconv.Atoi(websocketData.ChatId)
-	userId, _ := strconv.Atoi(websocketData.UserId)
 
-	_, err = global.ChatService.SendMessage(int64(chatId), int64(userId), websocketData.Message)
+	_, err = global.ChatService.SendMessage(int64(chatId), websocketData.UserId, websocketData.Message)
 	if err != nil {
 		fmt.Println(err.Error())
 		return

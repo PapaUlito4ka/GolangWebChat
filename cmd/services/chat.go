@@ -34,3 +34,18 @@ func (chatService *ChatService) SendMessage(chatId, userId int64, message string
 
 	return messageId, nil
 }
+
+func (chatService *ChatService) FindChatMessages(chatId int64) ([]dto.MessageDto, error) {
+	messages, err := chatService.ChatDb.FindChatMessages(chatId)
+	if err != nil {
+		return []dto.MessageDto{}, err
+	}
+
+	messagesDto := []dto.MessageDto{}
+	for _, message := range messages {
+		messageDto := dto.ToMessageDto(message)
+		messagesDto = append(messagesDto, messageDto)
+	}
+
+	return messagesDto, nil
+}

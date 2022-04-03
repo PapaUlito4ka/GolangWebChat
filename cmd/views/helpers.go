@@ -40,7 +40,7 @@ func RenderTemplate(templateName string, w http.ResponseWriter, files []string, 
 func CreateSession(w http.ResponseWriter, r *http.Request, user dto.UserDto) error {
 	session, _ := middleware.Store.Get(r, middleware.SESSION_NAME)
 	if !session.IsNew {
-		return errors.New("Session already exists")
+		return errors.New("session already exists")
 	}
 
 	session.Values["id"] = user.Id

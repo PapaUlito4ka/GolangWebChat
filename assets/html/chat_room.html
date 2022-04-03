@@ -20,7 +20,6 @@
         overflow: scroll;
     }
 
-    .message-input {}
 </style>
 
 {{end}}
@@ -28,10 +27,29 @@
 {{define "main"}}
 
 <div class="chat-window">
+    {{ $id := .Session.Values.id }}
+    {{ range .Messages }}
+        <div class="d-flex flex-row p-2 {{ if eq .User.Id $id }}darker{{ end }}">
+            <div class="d-flex flex-column flex-shrink-1 me-3">
+                <div class="d-flex flex-fill justify-content-center">
+                    <img class="rounded"
+                        src="https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_1280.png"
+                        width="50" height="50">
+                </div>
+            </div>
+            <div class="d-flex flex-column flex-grow-1">
+                <p class="mb-0 text-muted">{{.User.Username}}</p>
+                <p>{{.Message}}</p>
+            </div>
+            <div class="flex-shrink-1 ms-3">
+                <span class="time-right">{{.Time}}</span>
+            </div>
+        </div>
+    {{ end }}
 </div>
 
 <div class="d-flex flex-row">
-    <input type="text" class="form-control me-2 message-input" placeholder="Enter message"></input>
+    <input type="text" class="form-control message-input" placeholder="Enter message"></input>
 </div>
 
 {{end}}
@@ -76,7 +94,7 @@
                         <p>${data.message}</p>
                     </div>
                     <div class="flex-shrink-1 ms-3">
-                        <span class="time-right">11:00</span>
+                        <span class="time-right">${new Date().toDateString()}</span>
                     </div>
                 </div>`
         );
@@ -125,6 +143,7 @@
     }
 
     init({{.RoomName}}, {{.Session.Values.username}});
+    scrollToBottom();
 
 </script>
 
